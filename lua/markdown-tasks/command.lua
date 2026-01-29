@@ -1,5 +1,4 @@
-local ts_utils = require("markdown-tasks.treesitter_utils")
-local utils = require("markdown-tasks.utils")
+local api = require('markdown-tasks.api')
 
 ---@class markdown-tasks.command
 local M = {}
@@ -10,6 +9,7 @@ local plugin = "markdown-tasks.nvim"
 function M.init()
 	vim.api.nvim_create_user_command(name, M.command, {
 		desc = plugin .. "commands",
+		nargs = '*',
 	})
 end
 
@@ -26,60 +26,27 @@ end
 ---@param fargs string[]
 ---@return string?
 function M.run(fargs)
-	local parser = vim.treesitter.get_parser(0)
-	parser:parse()
-	local cursor_line, _ = utils.get_zero_indexed_cursor()
-	local cursor_eol = #vim.api.nvim_get_current_line()
-	local list_item = ts_utils.find_parent_node_type("list_item", { pos = { cursor_line, cursor_eol } })
-	if list_item == nil then
-		return "no list item found"
+	if #fargs > 2 then
+		return "invalid number of arguments:" .. #fargs
 	end
 
-	local marker = ts_utils.find_child_node_type(list_item, {
-		"list_marker_dot",
-		"list_marker_minus",
-		"list_marker_parenthesis",
-		"list_marker_star",
-	})
+	local method = fargs[1] or "toggle_list_item"
+	local command = api[method]
 
-	if marker == nil then
-		return "no list marker found"
+	if not command then
+		return "invalid method name: " .. method
 	end
 
-	local task_marker = ts_utils.find_child_node_type(list_item, {
-		"task_list_marker_checked",
-		"task_list_marker_unchecked",
-	})
+	if #fargs == 2 then
+		local command_args = fargs[2]
 
-	local list_item_line = list_item:start()
-
-	if cursor_line == list_item_line then
-		local _, start_col, _, end_col = marker:range()
-		if task_marker ~= nil then
-			_, end_col = task_marker:end_()
-			end_col = end_col + 1
-		end
-
-		vim.api.nvim_buf_set_text(0, cursor_line, start_col, cursor_line, end_col, {})
-	else
-		local start_line, _ = marker:start()
-		local first_node_on_cursor_line = vim.treesitter.get_node({ pos = { cursor_line, 0 } })
-
-		local start_col = 0
-		if first_node_on_cursor_line ~= nil and first_node_on_cursor_line:type() == "block_continuation" then
-			_, start_col = first_node_on_cursor_line:end_()
-		end
-
-		local end_col
-		if task_marker == nil then
-			_, end_col = marker:end_()
+		if command_args == 'true' then
+			command(true)
 		else
-			_, end_col = task_marker:end_()
-			end_col = end_col + 1
+			command(false)
 		end
-
-		local text = vim.api.nvim_buf_get_text(0, start_line, 0, start_line, end_col, {})
-		vim.api.nvim_buf_set_text(0, cursor_line, 0, cursor_line, start_col, text)
+	else
+		command(true)
 	end
 end
 
