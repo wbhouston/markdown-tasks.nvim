@@ -1,4 +1,4 @@
-local api = require('markdown-tasks.api')
+local api = require("markdown-tasks.api")
 
 ---@class markdown-tasks.command
 local M = {}
@@ -9,7 +9,7 @@ local plugin = "markdown-tasks.nvim"
 function M.init()
 	vim.api.nvim_create_user_command(name, M.command, {
 		desc = plugin .. "commands",
-		nargs = '*',
+		nargs = "*",
 	})
 end
 
@@ -40,7 +40,7 @@ function M.run(fargs)
 	if #fargs == 2 then
 		local command_args = fargs[2]
 
-		if command_args == 'true' then
+		if command_args == "true" then
 			command(true)
 		else
 			command(false)
