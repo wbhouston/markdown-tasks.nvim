@@ -1,6 +1,7 @@
 local ts_utils = require("markdown-tasks.treesitter_utils")
 local utils = require("markdown-tasks.utils")
 local TSNodeDecorator = require("markdown-tasks.decorators.tsnode_decorator")
+local ListItemDecorator = require("markdown-tasks.decorators.list_item_decorator")
 
 local M = {}
 
@@ -18,63 +19,31 @@ function M.toggle_list_item(copy_marker_before)
 			M.add_list_item_markers_to_line(copy_marker_before, cursor_row, cursor_list_item)
 		end
 	end
-	--
-	--  if not copy_marker_before then
-	--    search_line = cursor_line + 1
-	--  end
-	--
-	-- -- This is returning the list item on the previous line for blank lines.
-	-- -- If that changes, this search will need to be more rigorous.
-	-- local list_item = ts_utils.find_parent_node_by_type("list_item", { pos = { search_line, cursor_eol } })
-	-- local cursor_list_item = ts_utils.find_parent_node_by_type("list_item", { pos = { cursor_line, cursor_eol } })
-	--
-	-- if list_item == nil then
-	-- 	return
-	-- end
-	--
-	-- -- BUG: need to only search immediate children of the list item
-	-- local marker = ts_utils.find_child_node_by_type(list_item, {
-	-- 	"list_marker_dot",
-	-- 	"list_marker_minus",
-	-- 	"list_marker_parenthesis",
-	-- 	"list_marker_star",
-	-- })
-	--
-	-- if marker == nil then
-	-- 	return "no list marker found"
-	-- end
-	--
-	-- local task_marker = ts_utils.find_child_node_by_type(list_item, {
-	-- 	"task_list_marker_checked",
-	-- 	"task_list_marker_unchecked",
-	-- })
-	--
-	--  local cursor_list_item_line = 0
-	--
-	--  if cursor_list_item then
-	--    cursor_list_item_line, _ = list_item:start()
-	--  end
-	--
-	--  print(cursor_list_item_line)
-	-- if cursor_line == cursor_list_item_line then
-	-- 	M.remove_list_item_markers_from_line(cursor_line, marker, task_marker)
-	-- else
-	-- 	M.add_list_item_markers_to_line(cursor_line, marker, task_marker)
-	-- end
 end
 
 ---@private
 ---@param row integer
----@return markdown-tasks.decorators.TSNodeDecorator?
+---@return markdown-tasks.decorators.ListItemDecorator?
 function M.get_list_item(row)
 	local eol = #unpack(vim.api.nvim_buf_get_lines(0, row, row + 1, false))
 	local list_item = ts_utils.find_parent_node_by_type("list_item", { pos = { row, eol } })
 	if list_item then
-		return TSNodeDecorator.new(list_item)
+		return ListItemDecorator.new(list_item)
 	end
 end
 
--- BUG: when adding to the line before, the following line's indentation is used
+-- TODO: Consider new line behavior at the end and beginning of nested lists:
+-- >- list item
+-- >{case 1: add a line here}
+-- >  - list item
+-- > ...
+-- >  - list item
+-- >{case 2: add a line here}
+-- >- list item
+-- I feel like case 1 should always be the demoted list item because the
+-- first list item already had a sublist.
+-- I feel like case 2 should match the line it comes from.
+
 ---@private
 ---@param copy_marker_before boolean
 ---@param cursor_row integer
@@ -93,22 +62,13 @@ function M.add_list_item_markers_to_line(copy_marker_before, cursor_row, cursor_
 	end
 
 	-- BUG: need to only search immediate children of the list item
-	local marker = search_list_item:find_child_node_by_type({
-		"list_marker_dot",
-		"list_marker_minus",
-		"list_marker_parenthesis",
-		"list_marker_star",
-	})
+	local marker = search_list_item:marker()
 
 	if marker == nil then
 		return "no list marker found"
 	end
 
-	local task_marker = search_list_item:find_child_node_by_type({
-		"task_list_marker_checked",
-		"task_list_marker_unchecked",
-	})
-
+	local task_marker = search_list_item:task_marker()
 	local marker_row = marker.start_row
 	local marker_end_col = marker.end_col
 	local replace_start = 0
