@@ -1,6 +1,5 @@
 local ts_utils = require("markdown-tasks.treesitter_utils")
 local utils = require("markdown-tasks.utils")
-local TSNodeDecorator = require("markdown-tasks.decorators.tsnode_decorator")
 local ListItemDecorator = require("markdown-tasks.decorators.list_item_decorator")
 
 local M = {}
@@ -21,6 +20,8 @@ function M.toggle_list_item(copy_marker_before)
 	end
 end
 
+-- This is returning the list item on the previous line for blank lines.
+-- If that changes, this search will need to be more rigorous.
 ---@private
 ---@param row integer
 ---@return markdown-tasks.decorators.ListItemDecorator?
@@ -53,39 +54,17 @@ function M.add_list_item_markers_to_line(copy_marker_before, cursor_row, cursor_
 	local first_node_on_cursor_row = vim.treesitter.get_node({ pos = { cursor_row, 0 } })
 	local search_row = copy_marker_before and cursor_row - 1 or cursor_row + 1
 
-	-- This is returning the list item on the previous line for blank lines.
-	-- If that changes, this search will need to be more rigorous.
 	local search_list_item = M.get_list_item(search_row)
-
-	if search_list_item == nil then
+	if not search_list_item or not search_list_item:marker() then
 		return
 	end
 
-	-- BUG: need to only search immediate children of the list item
-	local marker = search_list_item:marker()
-
-	if marker == nil then
-		return "no list marker found"
-	end
-
-	local task_marker = search_list_item:task_marker()
-	local marker_row = marker.start_row
-	local marker_end_col = marker.end_col
 	local replace_start = 0
-
 	if first_node_on_cursor_row ~= nil and first_node_on_cursor_row:type() == "block_continuation" then
 		_, replace_start = first_node_on_cursor_row:end_()
 	end
 
-	if task_marker ~= nil then
-		marker_end_col = task_marker.end_col
-
-		-- The the task marker doesn't extend to the beginning of the inline node.
-		marker_end_col = marker_end_col + 1
-	end
-
-	local text = vim.api.nvim_buf_get_text(0, marker_row, 0, marker_row, marker_end_col, {})
-	vim.api.nvim_buf_set_text(0, cursor_row, 0, cursor_row, replace_start, text)
+	vim.api.nvim_buf_set_text(0, cursor_row, 0, cursor_row, replace_start, search_list_item:marker_text())
 
 	local cursor_eol = #unpack(vim.api.nvim_buf_get_lines(0, cursor_row, cursor_row + 1, false))
 	vim.api.nvim_win_set_cursor(0, { cursor_row + 1, cursor_eol })

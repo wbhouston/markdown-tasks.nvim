@@ -47,4 +47,23 @@ function ListItemDecorator:task_marker()
   end
 end
 
+---@return string[]
+function ListItemDecorator:marker_text()
+  if not self:marker() then
+    return {""}
+  end
+
+	local marker_row = self:marker().start_row
+	local marker_end_col = self:marker().end_col
+
+	if self:task_marker() ~= nil then
+		marker_end_col = self:task_marker().end_col
+
+		-- The the task marker doesn't extend to the beginning of the inline node.
+		marker_end_col = marker_end_col + 1
+	end
+
+	return vim.api.nvim_buf_get_text(0, marker_row, 0, marker_row, marker_end_col, {})
+end
+
 return ListItemDecorator
