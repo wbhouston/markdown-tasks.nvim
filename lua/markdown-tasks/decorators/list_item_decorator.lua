@@ -1,11 +1,13 @@
 local TSNodeDecorator = require("markdown-tasks.decorators.tsnode_decorator")
 
----@class markdown-tasks.decorators.ListItemDecorator
+---@class markdown-tasks.decorators.ListItemDecorator: markdown-tasks.decorators.TSNodeDecorator
 ---@field decorated_node markdown-tasks.decorators.TSNodeDecorator
 ---@field cached_marker markdown-tasks.decorators.TSNodeDecorator?
 ---@field cached_task_marker markdown-tasks.decorators.TSNodeDecorator?
 local ListItemDecorator = {}
-ListItemDecorator.__index = ListItemDecorator
+ListItemDecorator.__index = function(table, key)
+  return ListItemDecorator[key] or table.decorated_node[key]
+end
 
 ---@param node TSNode
 ---@return markdown-tasks.decorators.ListItemDecorator

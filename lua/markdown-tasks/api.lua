@@ -47,7 +47,7 @@ end
 ---@private
 ---@param copy_marker_before boolean
 ---@param cursor_row integer
----@params cursor_list_item markdown-tasks.decorators.TSNodeDecorator
+---@params cursor_list_item markdown-tasks.decorators.ListItemDecorator
 ---@return string?
 function M.add_list_item_markers_to_line(copy_marker_before, cursor_row, cursor_list_item)
 	local first_node_on_cursor_row = vim.treesitter.get_node({ pos = { cursor_row, 0 } })
@@ -92,19 +92,10 @@ function M.add_list_item_markers_to_line(copy_marker_before, cursor_row, cursor_
 end
 
 ---@private
----@params list_item markdown-tasks.decorators.TSNodeDecorator
+---@params list_item markdown-tasks.decorators.ListItemDecorator
 function M.remove_list_item_markers_from_line(list_item)
-	local marker = list_item:find_child_node_by_type({
-		"list_marker_dot",
-		"list_marker_minus",
-		"list_marker_parenthesis",
-		"list_marker_star",
-	})
-
-	local task_marker = list_item:find_child_node_by_type({
-		"task_list_marker_checked",
-		"task_list_marker_unchecked",
-	})
+	local marker = list_item:marker()
+	local task_marker = list_item:task_marker()
 
 	vim.api.nvim_buf_set_text(
 		0,
