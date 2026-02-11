@@ -26,7 +26,7 @@ end
 ---@param fargs string[]
 ---@return string?
 function M.run(fargs)
-	if #fargs > 2 then
+	if #fargs > 1 then
 		return "invalid number of arguments:" .. #fargs
 	end
 
@@ -37,17 +37,7 @@ function M.run(fargs)
 		return "invalid method name: " .. method
 	end
 
-	if #fargs == 2 then
-		local command_args = fargs[2]
-
-		if command_args == "true" then
-			command(true)
-		else
-			command(false)
-		end
-	else
-		command(true)
-	end
+	command()
 end
 
 return M

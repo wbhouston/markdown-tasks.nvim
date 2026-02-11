@@ -7,4 +7,15 @@ function M.get_zero_indexed_cursor()
 	return cursor_line - 1, cursor_col
 end
 
+---@param row integer
+---@return integer
+function M.get_eol(row)
+	local line = unpack(vim.api.nvim_buf_get_lines(0, row, row + 1, false))
+	if line then
+		return #line
+	else
+		return 0
+	end
+end
+
 return M

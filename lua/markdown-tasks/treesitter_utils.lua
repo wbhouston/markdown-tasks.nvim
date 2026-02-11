@@ -13,12 +13,10 @@ function M.find_child_node_by_type(node, types)
 	end
 end
 
+---@params node TSNode
 ---@param type string
----@param opts vim.treesitter.get_node.Opts
 ---@return TSNode?
-function M.find_parent_node_by_type(type, opts)
-	local node = ts.get_node(opts)
-
+function M.find_parent_node_by_type(node, type)
 	while node ~= nil and node:type() ~= type do
 		node = node:parent()
 	end
@@ -28,6 +26,12 @@ end
 
 function M.parse()
 	vim.treesitter.get_parser(0):parse()
+end
+
+---@param opts vim.treesitter.get_node.Opts
+---@return TSNode?
+function M.get_node(opts)
+	return vim.treesitter.get_node(opts)
 end
 
 return M

@@ -27,4 +27,27 @@ function TSNodeDecorator:find_child_node_by_type(types)
 	end
 end
 
+---@param type string
+---@return markdown-tasks.decorators.TSNodeDecorator?
+function TSNodeDecorator:find_parent_node_by_type(type)
+	local child = ts_utils.find_parent_node_by_type(self.node, type)
+	if child then
+		return TSNodeDecorator.new(child)
+	end
+end
+
+---@param other_node TSNode
+---@return boolean
+function TSNodeDecorator:includes(other_node)
+	while other_node do
+		if other_node:equal(self.node) then
+			return true
+		end
+
+		other_node = other_node:parent()
+	end
+
+	return false
+end
+
 return TSNodeDecorator
