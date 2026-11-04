@@ -6,7 +6,7 @@
 
 ## Goals
 
-- On `<CR>` or `o`, if the line being left is a blank list item, remove that blank item and leave the cursor on an empty line at column 0 (no markers, no indent).
+- On `<CR>` or `o`, if the line being left is a blank list item, clear that blank item to an empty separator line and leave the cursor on the following empty line at column 0 (no markers, no indent).
 - Nested lists and blockquotes: always full exit to column 0 (no one-level demotion).
 - `O` and `<leader>tl` keep current `toggle_list_item` behavior (no exit-on-blank).
 
@@ -37,11 +37,11 @@ Examples that **are not** blank: `- hello`, `- [ ] buy milk`
 
 When the previous line is a blank list item:
 
-1. Delete the previous blank list-item line entirely.
+1. Clear the previous blank list-item line to a plain empty string (no markers, no indent) — this is the blank separator under the list.
 2. Ensure the current line is a plain empty string (no markers, no indent).
-3. Place the cursor at column 0 on the current line.
+3. Place the cursor at column 0 on the current line (so one empty newline sits between the list and the cursor).
 
-Mid-list exit intentionally leaves a bare empty line between siblings (which splits the markdown list).
+Mid-list exit intentionally leaves empty lines between siblings (which splits the markdown list).
 
 ### Continue path
 
@@ -64,7 +64,7 @@ on_new_line()
 Private helpers:
 
 - `is_blank_list_item(row)` — true when the line has a list/task marker prefix and the remainder is only whitespace.
-- `exit_blank_list_item()` — delete previous row; set current line to `""`; set cursor to column 0.
+- `exit_blank_list_item()` — clear previous row to `""` (separator); set current line to `""`; set cursor to column 0 on the current line.
 
 Prefer reusing `get_list_item` / `ListItemDecorator` for marker bounds where helpful; blankness may use line text relative to those bounds so empty-line treesitter quirks do not block detection.
 
@@ -91,8 +91,8 @@ If parse fails or the previous row is out of range: fall through quietly (no not
 
 ## Manual test checklist
 
-- Blank `- ` then `<CR>` → empty col-0 line; blank item removed
-- Nested `  - ` blank then `<CR>` → empty col-0 (not demoted)
+- Blank `- ` then `<CR>` → empty separator under the list, cursor on following empty col-0 line
+- Nested `  - ` blank then `<CR>` → empty separator + cursor on following empty col-0 (not demoted)
 - Blank `- [ ] ` then `<CR>` → exit
 - Blank `1. ` then `<CR>` → exit
 - Mid-list blank exit → empty line between siblings

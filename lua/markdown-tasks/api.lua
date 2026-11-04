@@ -129,10 +129,11 @@ function M.exit_blank_list_item()
 		return
 	end
 
-	-- Delete the blank list item; the former current line shifts up to previous_row.
-	vim.api.nvim_buf_set_lines(0, previous_row, previous_row + 1, false, {})
+	-- Clear the blank list item to an empty line (separator), then leave the
+	-- cursor on the following empty line at column 0.
 	vim.api.nvim_buf_set_lines(0, previous_row, previous_row + 1, false, { "" })
-	vim.api.nvim_win_set_cursor(0, { previous_row + 1, 0 })
+	vim.api.nvim_buf_set_lines(0, cursor_row, cursor_row + 1, false, { "" })
+	vim.api.nvim_win_set_cursor(0, { cursor_row + 1, 0 })
 end
 
 function M.on_new_line()
