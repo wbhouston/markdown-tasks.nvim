@@ -18,6 +18,13 @@ function M.get_eol(row)
 	end
 end
 
+---True when `line` is empty or only whitespace.
+---@param line string
+---@return boolean
+function M.is_empty_or_whitespace_line(line)
+	return line:match("^%s*$") ~= nil
+end
+
 ---True when `line` is a list/task marker with no content after the prefix.
 ---Leading whitespace and blockquote `>` markers are ignored as content.
 ---@param line string
