@@ -56,4 +56,48 @@ function M.is_blank_list_line(line)
 	return s:match("^%d+[.)]%s+%[[ xX]%]%s*$") ~= nil
 end
 
+---0-based column of first non-whitespace at or after `after_markers_col`, or `#line` if none.
+---@param line string
+---@param after_markers_col integer
+---@return integer
+function M.list_item_content_start_col(line, after_markers_col)
+	if after_markers_col < 0 then
+		after_markers_col = 0
+	end
+	if after_markers_col > #line then
+		return #line
+	end
+	local tail = line:sub(after_markers_col + 1)
+	local non_ws = tail:find("%S")
+	if not non_ws then
+		return #line
+	end
+	return after_markers_col + non_ws - 1
+end
+
+---@param cursor_col integer
+---@param content_start_col integer
+---@return boolean
+function M.is_cursor_at_list_item_start(cursor_col, content_start_col)
+	return cursor_col < content_start_col
+end
+
+---Count consecutive ASCII spaces (` `) immediately before 0-based `col`.
+---@param line string
+---@param col integer
+---@return integer
+function M.count_ascii_spaces_before(line, col)
+	local n = 0
+	local i = col
+	while i > 0 do
+		local ch = line:sub(i, i)
+		if ch ~= " " then
+			break
+		end
+		n = n + 1
+		i = i - 1
+	end
+	return n
+end
+
 return M
