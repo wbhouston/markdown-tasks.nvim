@@ -4,6 +4,20 @@ local ListItemDecorator = require("markdown-tasks.decorators.list_item_decorator
 
 local M = {}
 
+---@private
+---@param cursor_row integer
+function M.add_basic_list_item_marker(cursor_row)
+	local first_node_on_cursor_row = vim.treesitter.get_node({ pos = { cursor_row, 0 } })
+	local replace_start = 0
+	if first_node_on_cursor_row ~= nil and first_node_on_cursor_row:type() == "block_continuation" then
+		_, replace_start = first_node_on_cursor_row:end_()
+	end
+
+	vim.api.nvim_buf_set_text(0, cursor_row, replace_start, cursor_row, replace_start, { "- " })
+	local cursor_eol = utils.get_eol(cursor_row)
+	vim.api.nvim_win_set_cursor(0, { cursor_row + 1, cursor_eol })
+end
+
 function M.toggle_list_item()
 	ts_utils.parse()
 
@@ -20,6 +34,8 @@ function M.toggle_list_item()
 		local next_line_cursor_item = M.get_list_item(cursor_row + 1)
 		if next_line_cursor_item then
 			M.add_list_item_markers_to_line(cursor_row)
+		else
+			M.add_basic_list_item_marker(cursor_row)
 		end
 	end
 end
