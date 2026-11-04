@@ -27,7 +27,7 @@ function M.on_attach(buf)
 
 	vim.api.nvim_set_keymap("i", "<cr>", "<cr><cmd>MarkdownTasks on_new_line<cr>", {})
 	vim.api.nvim_set_keymap("n", "o", "o<cmd>MarkdownTasks on_new_line<cr>", {})
-	vim.api.nvim_set_keymap("n", "O", "O<cmd>MarkdownTasks toggle_list_item<cr>", {})
+	vim.api.nvim_set_keymap("n", "O", "O<cmd>MarkdownTasks continue_list_item_on_new_line<cr>", {})
 	vim.api.nvim_set_keymap("n", "<leader>tl", "<cmd>MarkdownTasks toggle_list_item<cr>", {})
 end
 

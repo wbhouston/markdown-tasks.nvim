@@ -136,6 +136,23 @@ function M.exit_blank_list_item()
 	vim.api.nvim_win_set_cursor(0, { cursor_row + 1, 0 })
 end
 
+function M.continue_list_item_on_new_line()
+	local cursor_row = utils.get_zero_indexed_cursor()
+	local previous_row = cursor_row - 1
+	if previous_row < 0 then
+		return
+	end
+
+	local lines = vim.api.nvim_buf_get_lines(0, previous_row, previous_row + 1, false)
+	local previous_line = lines[1]
+	if not previous_line or utils.is_empty_or_whitespace_line(previous_line) then
+		return
+	end
+
+	ts_utils.parse()
+	M.add_list_item_markers_to_line(cursor_row)
+end
+
 function M.on_new_line()
 	ts_utils.parse()
 
@@ -147,7 +164,7 @@ function M.on_new_line()
 		return
 	end
 
-	M.add_list_item_markers_to_line(cursor_row)
+	M.continue_list_item_on_new_line()
 end
 
 return M
