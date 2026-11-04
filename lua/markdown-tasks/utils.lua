@@ -18,4 +18,35 @@ function M.get_eol(row)
 	end
 end
 
+---True when `line` is a list/task marker with no content after the prefix.
+---Leading whitespace and blockquote `>` markers are ignored as content.
+---@param line string
+---@return boolean
+function M.is_blank_list_line(line)
+	if not line or line == "" then
+		return false
+	end
+
+	local s = line:match("^%s*(.*)$")
+	while true do
+		local tail = s:match("^>%s+(.*)$")
+		if not tail then
+			break
+		end
+		s = tail
+	end
+
+	-- Lua patterns have no `|` alternation, `?`, or `*` on groups; match marker variants explicitly.
+	if s:match("^[-*+]%s*$") then
+		return true
+	end
+	if s:match("^[-*+]%s+%[[ xX]%]%s*$") then
+		return true
+	end
+	if s:match("^%d+[.)]%s*$") then
+		return true
+	end
+	return s:match("^%d+[.)]%s+%[[ xX]%]%s*$") ~= nil
+end
+
 return M
