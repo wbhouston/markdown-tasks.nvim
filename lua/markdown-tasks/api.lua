@@ -106,4 +106,47 @@ function M.remove_list_item_markers_from_line(list_item)
 	)
 end
 
+---@private
+---@param row integer zero-based
+---@return boolean
+function M.is_blank_list_item(row)
+	if row < 0 then
+		return false
+	end
+	local lines = vim.api.nvim_buf_get_lines(0, row, row + 1, false)
+	local line = lines[1]
+	if not line then
+		return false
+	end
+	return utils.is_blank_list_line(line)
+end
+
+---@private
+function M.exit_blank_list_item()
+	local cursor_row = utils.get_zero_indexed_cursor()
+	local previous_row = cursor_row - 1
+	if previous_row < 0 then
+		return
+	end
+
+	-- Delete the blank list item; the former current line shifts up to previous_row.
+	vim.api.nvim_buf_set_lines(0, previous_row, previous_row + 1, false, {})
+	vim.api.nvim_buf_set_lines(0, previous_row, previous_row + 1, false, { "" })
+	vim.api.nvim_win_set_cursor(0, { previous_row + 1, 0 })
+end
+
+function M.on_new_line()
+	ts_utils.parse()
+
+	local cursor_row = utils.get_zero_indexed_cursor()
+	local previous_row = cursor_row - 1
+
+	if previous_row >= 0 and M.is_blank_list_item(previous_row) then
+		M.exit_blank_list_item()
+		return
+	end
+
+	M.add_list_item_markers_to_line(cursor_row)
+end
+
 return M
