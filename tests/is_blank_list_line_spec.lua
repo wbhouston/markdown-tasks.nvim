@@ -12,6 +12,10 @@ local blank = {
 	"- ",
 	"  - [ ]",
 	"> - [x] ",
+	">-",
+	">- ",
+	">- [ ]",
+	">> -",
 	"1. ",
 	"* ",
 	"+",
@@ -26,6 +30,7 @@ local not_blank = {
 	"",
 	"1. item",
 	"> not a list",
+	"> - hello",
 }
 
 for _, line in ipairs(blank) do

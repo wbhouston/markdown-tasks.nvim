@@ -29,7 +29,7 @@ function M.is_blank_list_line(line)
 
 	local s = line:match("^%s*(.*)$")
 	while true do
-		local tail = s:match("^>%s+(.*)$")
+		local tail = s:match("^>%s*(.*)$")
 		if not tail then
 			break
 		end
