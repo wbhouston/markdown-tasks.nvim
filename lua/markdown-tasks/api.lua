@@ -183,4 +183,136 @@ function M.on_new_line()
 	M.continue_list_item_on_new_line()
 end
 
+---@private
+---@return integer
+function M.list_indent_step()
+	return vim.fn.shiftwidth()
+end
+
+---Column just past marker / task marker on the marker row.
+---@private
+---@param list_item markdown-tasks.decorators.ListItemDecorator
+---@return integer? after_markers_col
+---@return markdown-tasks.decorators.TSNodeDecorator? marker
+function M.after_list_markers_col(list_item)
+	local marker = list_item:marker()
+	if not marker then
+		return nil, nil
+	end
+	local after = marker.end_col
+	local task = list_item:task_marker()
+	if task then
+		after = task.end_col
+	end
+	return after, marker
+end
+
+---Column of the list-marker glyph (`-`, `*`, `1.`, …).
+---tree-sitter-markdown `list_marker_*` nodes include leading indent and the
+---trailing space, so `marker.start_col` is not that glyph.
+---@private
+---@param line string
+---@param marker markdown-tasks.decorators.TSNodeDecorator
+---@return integer
+function M.list_marker_glyph_col(line, marker)
+	local col = marker.start_col
+	local limit = marker.end_col
+	if limit > #line then
+		limit = #line
+	end
+	while col < limit do
+		local ch = line:sub(col + 1, col + 1)
+		if ch ~= " " and ch ~= "\t" then
+			return col
+		end
+		col = col + 1
+	end
+	return marker.start_col
+end
+
+---@private
+---@return boolean
+function M.at_list_item_start()
+	ts_utils.parse()
+	local cursor_row, cursor_col = utils.get_zero_indexed_cursor()
+	local list_item = M.get_list_item(cursor_row)
+	if not list_item then
+		return false
+	end
+	local after, marker = M.after_list_markers_col(list_item)
+	if not marker or marker.start_row ~= cursor_row then
+		return false
+	end
+	local line = vim.api.nvim_buf_get_lines(0, cursor_row, cursor_row + 1, false)[1] or ""
+	local content_start = utils.list_item_content_start_col(line, after)
+	return utils.is_cursor_at_list_item_start(cursor_col, content_start)
+end
+
+---@private
+---@param delta integer positive = indent right
+function M.shift_list_item_indent(delta)
+	ts_utils.parse()
+	local cursor_row, cursor_col = utils.get_zero_indexed_cursor()
+	local list_item = M.get_list_item(cursor_row)
+	if not list_item then
+		return
+	end
+	local after, marker = M.after_list_markers_col(list_item)
+	if not marker or marker.start_row ~= cursor_row then
+		return
+	end
+	local line = vim.api.nvim_buf_get_lines(0, cursor_row, cursor_row + 1, false)[1] or ""
+	local content_start = utils.list_item_content_start_col(line, after)
+	local offset_from_content = cursor_col - content_start
+
+	local col = M.list_marker_glyph_col(line, marker)
+	if delta > 0 then
+		vim.api.nvim_buf_set_text(0, cursor_row, col, cursor_row, col, { string.rep(" ", delta) })
+	elseif delta < 0 then
+		local remove = -delta
+		vim.api.nvim_buf_set_text(0, cursor_row, col - remove, cursor_row, col, {})
+	end
+
+	local new_content_start = content_start + delta
+	local new_col = new_content_start + offset_from_content
+	if new_col < 0 then
+		new_col = 0
+	end
+	vim.api.nvim_win_set_cursor(0, { cursor_row + 1, new_col })
+end
+
+---@return boolean handled
+function M.indent_list_item()
+	if not M.at_list_item_start() then
+		return false
+	end
+	M.shift_list_item_indent(M.list_indent_step())
+	return true
+end
+
+---@return boolean handled
+function M.outdent_list_item()
+	if not M.at_list_item_start() then
+		return false
+	end
+	ts_utils.parse()
+	local cursor_row = utils.get_zero_indexed_cursor()
+	local list_item = M.get_list_item(cursor_row)
+	if not list_item then
+		return true
+	end
+	local _, marker = M.after_list_markers_col(list_item)
+	if not marker then
+		return true
+	end
+	local line = vim.api.nvim_buf_get_lines(0, cursor_row, cursor_row + 1, false)[1] or ""
+	local step = M.list_indent_step()
+	local available = utils.count_ascii_spaces_before(line, M.list_marker_glyph_col(line, marker))
+	if available < step then
+		return true
+	end
+	M.shift_list_item_indent(-step)
+	return true
+end
+
 return M
