@@ -75,11 +75,18 @@ function M.list_item_content_start_col(line, after_markers_col)
 	return after_markers_col + non_ws - 1
 end
 
+---True when the insert cursor is still in the list-item prefix zone.
+---When there is no content, `content_start_col` is `#line` and an insert-mode
+---cursor may sit at EOL (`cursor_col == #line`); that still counts as at start.
 ---@param cursor_col integer
 ---@param content_start_col integer
+---@param line_len integer
 ---@return boolean
-function M.is_cursor_at_list_item_start(cursor_col, content_start_col)
-	return cursor_col < content_start_col
+function M.is_cursor_at_list_item_start(cursor_col, content_start_col, line_len)
+	if cursor_col < content_start_col then
+		return true
+	end
+	return content_start_col >= line_len and cursor_col <= line_len
 end
 
 ---Count consecutive ASCII spaces (` `) immediately before 0-based `col`.

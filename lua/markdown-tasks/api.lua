@@ -245,8 +245,9 @@ function M.at_list_item_start()
 	end
 	local line = vim.api.nvim_buf_get_lines(0, cursor_row, cursor_row + 1, false)[1] or ""
 	local content_start = utils.list_item_content_start_col(line, after)
-	return utils.is_cursor_at_list_item_start(cursor_col, content_start)
+	return utils.is_cursor_at_list_item_start(cursor_col, content_start, #line)
 end
+
 
 ---@private
 ---@param delta integer positive = indent right

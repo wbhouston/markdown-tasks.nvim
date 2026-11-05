@@ -14,10 +14,16 @@ assert_eq(utils.list_item_content_start_col("- [ ]   buy", 5), 8, "whitespace af
 assert_eq(utils.list_item_content_start_col("- ", 1), 2, "no content → EOL")
 assert_eq(utils.list_item_content_start_col("- [ ]   ", 5), 8, "blank item trailing ws → EOL")
 
-assert_eq(utils.is_cursor_at_list_item_start(0, 2), true, "before content")
-assert_eq(utils.is_cursor_at_list_item_start(1, 2), true, "in prefix")
-assert_eq(utils.is_cursor_at_list_item_start(2, 2), false, "on first content char")
-assert_eq(utils.is_cursor_at_list_item_start(3, 2), false, "past content start")
+-- With content (e.g. "- item", content at col 2, line len 6): strict before content
+assert_eq(utils.is_cursor_at_list_item_start(0, 2, 6), true, "before content")
+assert_eq(utils.is_cursor_at_list_item_start(1, 2, 6), true, "in prefix")
+assert_eq(utils.is_cursor_at_list_item_start(2, 2, 6), false, "on first content char")
+assert_eq(utils.is_cursor_at_list_item_start(3, 2, 6), false, "past content start")
+
+-- Blank item "- " (len 2): content_start is EOL; insert cursor at EOL must count as start
+assert_eq(utils.is_cursor_at_list_item_start(2, 2, 2), true, "EOL on blank item")
+assert_eq(utils.is_cursor_at_list_item_start(1, 2, 2), true, "in blank trailing space")
+assert_eq(utils.is_cursor_at_list_item_start(0, 2, 2), true, "on marker of blank item")
 
 assert_eq(utils.count_ascii_spaces_before("  - item", 2), 2, "two spaces before marker")
 assert_eq(utils.count_ascii_spaces_before("- item", 0), 0, "bol")

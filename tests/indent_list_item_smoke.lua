@@ -41,4 +41,15 @@ local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 assert(lines[1] == "  - parent", "parent indented")
 assert(lines[2] == "  - child", "child unchanged")
 
+-- Blank item with cursor at EOL after marker space ("- |$") — most common insert position.
+-- Outside insert mode Neovim clamps col to #line-1; virtualedit lets us sit at EOL.
+vim.opt.virtualedit = "onemore"
+reset({ "- " }, 1, 2)
+assert(api.at_list_item_start() == true, "blank EOL is at start")
+assert(api.indent_list_item() == true, "blank EOL indent handled")
+assert(vim.api.nvim_buf_get_lines(0, 0, -1, false)[1] == "  - ", "blank EOL indented")
+assert(api.outdent_list_item() == true, "blank EOL outdent handled")
+assert(vim.api.nvim_buf_get_lines(0, 0, -1, false)[1] == "- ", "blank EOL outdented")
+vim.opt.virtualedit = ""
+
 print("indent_list_item_smoke: OK")
